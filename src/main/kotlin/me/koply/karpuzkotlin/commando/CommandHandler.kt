@@ -12,19 +12,14 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class CommandHandler(private val commands : HashMap<String, Command>) : ListenerAdapter() {
+object CommandHandler : ListenerAdapter() {
 
     private val cooldownList : ConcurrentMap<String, Long> = ConcurrentHashMap()
     private val executor : ExecutorService = Executors.newCachedThreadPool()
+    private val commands = HashMap<String, Command>()
 
     init {
-        /*val ping = Ping()
-        commands[ping.name[0]] = ping
-
-        val help = Help()
-        commands[help.name[0]] = help*/
         registerCommands()
-
         MapCleanerPool(cooldownList).asyncCleaner()
     }
 
@@ -52,10 +47,7 @@ class CommandHandler(private val commands : HashMap<String, Command>) : Listener
             println("Last command declined due to cooldown.")
             return
         }
-
-
-
-
+        cooldownList[e.author.id] = currentMillis
 
         try  {
             executor.submit {
@@ -73,10 +65,8 @@ class CommandHandler(private val commands : HashMap<String, Command>) : Listener
         val classes : MutableSet<Class<out Command>>? = reflections.getSubTypesOf(Command::class.java)
 
         if (classes != null) {
-            println("${classes.size} asd")
             for (cl : Class<out Command> in classes) {
-                val command : Command = cl.newInstance()
-                println("olah")
+                @Suppress("DEPRECATION") val command : Command = cl.newInstance()
                 val commandName : ArrayList<String> = command.name
 
                 val groupRawNameSplit = cl.`package`.name.split("\\.")
@@ -90,10 +80,8 @@ class CommandHandler(private val commands : HashMap<String, Command>) : Listener
 
                 command.group = groupRawName
                 for (str in commandName) {
-                    println("$str merba")
                     commands[str] = command
                 }
-
             }
         }
     }

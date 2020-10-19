@@ -1,24 +1,27 @@
 package me.koply.karpuzkotlin.util
 
 import me.koply.karpuzkotlin.Ref
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
-class MapCleanerPool(val cooldownList : ConcurrentMap<String, Long>) {
+class MapCleanerPool(private val cooldownList : ConcurrentMap<String, Long>) {
 
     init {
         println("MapCleanerPool#init")
     }
 
-    val scheduledExecutorService : ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+    private val scheduledExecutorService : ScheduledExecutorService = Executors.newScheduledThreadPool(1)
     private var cooldown : Int = 0
     fun asyncCleaner() {
         println("MapCleanerPool#asyncCleaner")
         val task = Runnable { cleaner() }
-        val scheduledFuture : ScheduledFuture<*> =  scheduledExecutorService.scheduleAtFixedRate(task, 1L, 1L, TimeUnit.MINUTES)
+        scheduledExecutorService.scheduleAtFixedRate(task, 1L, 1L, TimeUnit.MINUTES)
         cooldown = Ref.COOLDOWN
     }
 
-    fun cleaner() {
+    private fun cleaner() {
         val currentMillis : Long = System.currentTimeMillis()
         var i = 0
         for (entry : Map.Entry<String, Long> in cooldownList.entries) {
